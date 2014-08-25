@@ -26,14 +26,17 @@ def sendAlert(alertLevel = "info", addr = "cselabs-team-group@nyu.edu", sender =
     msg["Message-id"] = email.utils.make_msgid()
     msg["From"] = sender
     msg["To"] = addr
+    print "Connecting"###
     server = smtplib.SMTP("smtp.gmail.com")
+    print "Initializing send"###
     server.sendmail(sender, addr, msg.as_string())
+    print "Sent"###
     server.quit()
-    except Exception, e:
-        print "Exception: ", e
+    print "Server quit"###
 
-def checkDisk(device):
-    ###device validation code here###
+#sendAlert(subject = "test", content = "Test email, please ignore")
+
+def checkDisk(device): ###device variable validation code should be before this function is called###
     df = subprocess.Popen(["df", device], stdout=subprocess.PIPE)
     output = df.communicate()[0]
     device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
@@ -41,9 +44,34 @@ def checkDisk(device):
         sendAlert(alertLevel = "critical", \
                     subject = "disk usage above 95%", \
                     content = "Alert: disk usage in " + serverName + " is now " + percent)
-    else if int(percent.replace("%", "")) >= 90:
+    elif int(percent.replace("%", "")) >= 90:
         sendAlert(alertLevel = "warning", \
                     subject = "disk usage above 90%", \
-                    content = "Alert: disk usage in " + serverName + " is now " + percent))
-                    
-    print "disk size is ", size
+                    content = "Alert: disk usage in " + serverName + " is now " + percent)
+    #print "disk size is ", size
+
+def checkCpuRam():
+    top = subprocess.Popen(["top", "-b", "-p 1", "-n 1"], stdout=subprocess.PIPE)
+    output = top.communicate()[0]
+    _, _, cpuLine, memLine, swpLine, _ = output.split('\n', 5)
+    cpuUsedPercent = str(100.0 - float(cpuLine.split()[7]))    #cpuLine.split()[7] contains the %idle value
+    if float(cpuUsedPercent) >= 95:
+        sendAlert(alertLevel = "critical", \
+                    subject = "CPU usage above 95%", \
+                    content = "Alert: CPU usage in " + serverName + " is now " + cpuUsedPercent + "%")
+    elif float(cpuUsedPercent) >= 90:
+        sendAlert(alertLevel = "warning", \
+                    subject = "CPU usage above 90%", \
+                    content = "Alert: CPU usage in " + serverName + " is now " + cpuUsedPercent + "%")
+        
+    _, _, memTotal, _, memUsed, _, memFree, _, _, _ = memLine.split()
+    memUsedPercent = str(float(memUsed)*100/float(memTotal))
+    if float(memUsedPercent) >= 95:
+        sendAlert(alertLevel = "critical", \
+                    subject = "Memory usage above 95%", \
+                    content = "Alert: memory usage in " + serverName + " is now " + memUsedPercent + "%")
+    elif float(memUsedPercent) >= 90:
+        sendAlert(alertLevel = "warning", \
+                    subject = "Memory usage above 90%", \
+                    content = "Alert: memory usage in " + serverName + " is now " + memUsedPercent + "%")
+    ###not worried about swap, so not using swpLine for now###

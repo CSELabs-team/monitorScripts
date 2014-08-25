@@ -75,3 +75,8 @@ def checkCpuRam():
                     subject = "Memory usage above 90%", \
                     content = "Alert: memory usage in " + serverName + " is now " + memUsedPercent + "%")
     ###not worried about swap, so not using swpLine for now###
+
+###main
+while True:
+    checkCpuRam()
+    checkDisk('/dev/sda1')

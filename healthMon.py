@@ -37,6 +37,7 @@ def sendAlert(alertLevel = "info", addr = "cselabs-team-group@nyu.edu", sender =
 #sendAlert(subject = "test", content = "Test email, please ignore")
 
 def checkDisk(device): ###device variable validation code should be before this function is called###
+    retVal = '.'
     df = subprocess.Popen(["df", device], stdout=subprocess.PIPE)
     output = df.communicate()[0]
     device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
@@ -44,13 +45,17 @@ def checkDisk(device): ###device variable validation code should be before this 
         sendAlert(alertLevel = "critical", \
                     subject = "disk usage above 95%", \
                     content = "Alert: disk usage in " + serverName + " is now " + percent)
+        retVal = '!'
     elif int(percent.replace("%", "")) >= 90:
         sendAlert(alertLevel = "warning", \
                     subject = "disk usage above 90%", \
                     content = "Alert: disk usage in " + serverName + " is now " + percent)
+        retVal = '!'
+    return retVal
     #print "disk size is ", size
 
 def checkCpuRam():
+    retVal = '.'
     top = subprocess.Popen(["top", "-b", "-p 1", "-n 1"], stdout=subprocess.PIPE)
     output = top.communicate()[0]
     _, _, cpuLine, memLine, swpLine, _ = output.split('\n', 5)
@@ -59,10 +64,12 @@ def checkCpuRam():
         sendAlert(alertLevel = "critical", \
                     subject = "CPU usage above 95%", \
                     content = "Alert: CPU usage in " + serverName + " is now " + cpuUsedPercent + "%")
+        retVal = '!'
     elif float(cpuUsedPercent) >= 90:
         sendAlert(alertLevel = "warning", \
                     subject = "CPU usage above 90%", \
                     content = "Alert: CPU usage in " + serverName + " is now " + cpuUsedPercent + "%")
+        retVal = '!'
         
     _, _, memTotal, _, memUsed, _, memFree, _, _, _ = memLine.split()
     memUsedPercent = str(float(memUsed)*100/float(memTotal))
@@ -70,13 +77,18 @@ def checkCpuRam():
         sendAlert(alertLevel = "critical", \
                     subject = "Memory usage above 95%", \
                     content = "Alert: memory usage in " + serverName + " is now " + memUsedPercent + "%")
+        retVal += '!'
     elif float(memUsedPercent) >= 90:
         sendAlert(alertLevel = "warning", \
                     subject = "Memory usage above 90%", \
                     content = "Alert: memory usage in " + serverName + " is now " + memUsedPercent + "%")
+        retVal += '!'
+    else:
+        retVal += '.'
+    return retVal
     ###not worried about swap, so not using swpLine for now###
 
 ###main
 while True:
-    checkCpuRam()
-    checkDisk('/dev/sda1')
+    print checkCpuRam()
+    print checkDisk('/dev/sda1')
